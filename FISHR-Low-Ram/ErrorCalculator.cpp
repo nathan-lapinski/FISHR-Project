@@ -34,7 +34,7 @@ void ErrorCalculator::readBmidFile(string path)
        ifstream file_bmid(path.c_str());
        if( !file_bmid )
        {
-            cerr<< "bmid file cannot be oppened. exiting program" <<endl; 
+            cerr<< "Error: bmid file cannot be oppened. This could be due to a bad path or a currupted program. Exiting program" <<endl; 
             exit( -1 );
        }
        Marker cur_marker;
@@ -65,7 +65,7 @@ void ErrorCalculator::changeMapFile( string path )
        ifstream file_bmid(path.c_str());
        if( !file_bmid )
        {
-            cerr<< " hold out map file cannot be oppened. exiting program" <<endl;
+            cerr<< "Error: hold out file cannot be oppened. This could be due to a bad path or a currupted program. Exiting program" <<endl;
             exit( -1 );
        }
 
@@ -109,7 +109,7 @@ void ErrorCalculator::readBsidFile(string path)
        ifstream file_bsid(path.c_str() );
        if( !file_bsid )
        {
-            cerr<< "bsid file cannot be oppened. exiting program" <<endl;
+            cerr<< "Error: bsid file cannot be oppened. This could be due to a bad path or a currupted program. Exiting program" <<endl;
             exit( -1 );
        }
 
@@ -141,7 +141,7 @@ void ErrorCalculator::readPedFile(string path, string missing)
 {
          if(pers_count<=0)
          {
-             cerr<<"read bsid file first"<<endl;
+             cerr<<"Warning: You must read bsid file before reading the ped file. Consider changing the argument order at the command line."<<endl;
              return;
          }
          ped_file.clear();
@@ -154,7 +154,7 @@ void ErrorCalculator::readPedFile(string path, string missing)
                 ifstream file_ped(path.c_str());
                 if( !file_ped )
                 {
-                    cerr<< "original ped file cannot be oppened. exiting program" <<endl;
+                    cerr<< "Error: original ped file cannot be oppened. This could be due to a bad path or a currupted program. Exiting program" <<endl;
                      exit( -1 );
                 }
 
@@ -223,7 +223,7 @@ void ErrorCalculator::readHPedFile(string path, string missing)
                 ifstream file_ped(path.c_str());
                 if( !file_ped )
                 {
-                    cerr<< "hold out file cannot be oppened. exiting program" <<endl;
+                    cerr<< "Error: hold out file cannot be oppened. This could be due to a bad path or a currupted program. Exiting program" <<endl;
                     exit( -1 );
                  }
 
@@ -284,38 +284,7 @@ void ErrorCalculator::readHPedFile(string path, string missing)
                  exit( -1 );
          }
 }
-/*
-vector<int> ErrorCalculator::getTrimPositions(std::vector<float>averages,int snp1,int snp2, float threshold,float minLength)
-{
-        vector<int> trimPositions;
-	int length=snp2-snp1;
-        int start=0,end=0;
-        for(int i=0;i<averages.size();++i)
-        {	
-                   if(averages[i]>threshold)   //start going through every recorded average, and look to see if it is greater than the threshold, indicating either a start/end position.
-                   {
 
-                        if((marker_id[(snp1+end)].cm_distance-marker_id[(snp1+start)].cm_distance)>=minLength)
-
-                        {
-                                trimPositions.push_back(start);
-                                trimPositions.push_back(end);
-                        }
-                                start=end=i+1;
-                   }
-                   else 
-                   {
-                       end++;
-
-                   }
-        }
-        if(trimPositions.size()==0&&start==0)
-                {
-                        trimPositions.push_back(0);
-                        trimPositions.push_back(length);
-                }
-          return trimPositions;
-}*/
 //New function for signaling whether or not an SH is an initial drop
 bool ErrorCalculator::isInitialCmDrop(int snp1, int snp2, float minLength){
 	if( ( (marker_id[snp2].cm_distance - marker_id[snp1].cm_distance) < minLength )  ){
