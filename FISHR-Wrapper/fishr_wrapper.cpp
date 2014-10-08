@@ -87,7 +87,7 @@ int main(){
                 for(size_t i = 0; i != vs.size(); ++i){
                         argvv[i] = &vs[i][0];
                 }
-		execvp("/work/KellerLab/opt/bin/fishr_low_ram5.0",argvv.data());
+		execvp("/work/KellerLab/opt/bin/fishr_low_ram6.0",argvv.data());
 	} else {
 		//something went wrong.
 		cout << "Some part of input was corrupted. Please try running the program again. Exiting..." << endl;
