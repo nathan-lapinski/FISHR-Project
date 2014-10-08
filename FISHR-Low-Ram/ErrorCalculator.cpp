@@ -838,6 +838,15 @@ void ErrorCalculator::fullPlusDroppedOutput( int pers1,int pers2,int snp1,int sn
         cout<<"\t"<< pct_err;
         cout << "\t"<< reason << endl;
 }
+void ErrorCalculator::weightedOutput(int pers1, int pers2, int snp1, int snp2, float weight){
+  cout<<sample_id[pers1*2]<<"\t"
+  <<sample_id[pers2*2]<<"\t"
+  <<marker_id[snp1].bp_distance<<"\t"
+  <<marker_id[snp2].bp_distance<<"\t"
+  <<(snp2-snp1)<<"\t"
+  <<(marker_id[snp2].cm_distance-marker_id[snp1].cm_distance)
+  <<"\t"<<weight<<endl;
+}
 //new error1 output
 template <class T>
 void ErrorCalculator::middleOutPut(int pers1, int pers2, int snp1, int snp2, int min_snp, float min_cm, vector<T> positions, float pct_err, int start, int end){

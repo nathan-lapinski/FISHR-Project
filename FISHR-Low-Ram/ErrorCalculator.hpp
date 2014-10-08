@@ -1,7 +1,7 @@
 #include <fstream>
 #include <sstream>
-#include<string>
-#include<vector>
+#include <string>
+#include <vector>
 class SNPs;
 class Marker;
 class ErrorCalculator
@@ -21,6 +21,7 @@ class ErrorCalculator
          
          void finalOutPut( int pers1,int pers2,
                           int snp1,int snp2,float min_cm );
+         void weightedOutput( int pers1, int pers2, int snp1, int snp2, float weight);
          template < class T >
           void fullPlusDroppedOutput( int pers1,int pers2,int snp1,int snp2,int min_snp, float min_cm, std::vector<T> positions,float pct_err,int reason );
 	

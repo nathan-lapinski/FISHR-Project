@@ -6,6 +6,19 @@ class SNP
  int start,end;
 
 };
+class Weighted_SH{
+public:
+    int snp1, snp2;
+    int per1,per2;
+    float final_weight;
+    float snp_weight;
+    Weighted_SH(int s1,int s2,int p1,int p2){
+        snp1 = s1;
+        snp2 = s2;
+        per1 = p1;
+        per2 = p2;
+    }
+};
 class Consolidator
 {
         public:
@@ -30,6 +43,15 @@ class Consolidator
         float getPctErrThreshold( float threshold);
         float getHoldOutThreshold( float threshold );
 
+        /*Weighted output functions*/
+        void update_genome(int snp1,int snp2);
+        void print_genome();
+        float update_snp_weight(int snp1,int snp2);
+        int find_genome_min();
+        int find_genome_max();
+        float average_snp_count();
+        /**/
+
         void setPersonCount(int p_count){
             person_count = p_count;
         }
@@ -49,8 +71,21 @@ class Consolidator
         std::vector < std::vector < std::vector < SNP > > > m_trueMatches;
         std::vector< float > m_errors;
         std::vector< float > m_holdOutErrors;
+        //new, for weighting algo
+        std::vector < Weighted_SH > m_weighted_sh;
+        //this should actually hold the ints for the genome array in the weighted algorithm
+        std::vector <int> genome_vector;
         void sortMatches();
 
         static bool compareFunction(SNP s1, SNP s2);   
-
+        std::string consolidated_str;
+        std::string initial_drop_str;
+        std::string emp_pie_thresh_str;
+        std::string ma_drop_str;
+        std::string pie_drop_str;
+        std::string emp_ma_thresh_str;
+        std::string ibg_str;
+        std::string final_sh_str;
+        std::string ma_thresh_str;
+        int global_initial;
 };

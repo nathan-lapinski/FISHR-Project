@@ -8,6 +8,8 @@
 #include <exception>
 #include <algorithm>
 #include <assert.h>
+#include <sstream>
+#include <iomanip>
 using namespace std;
 template <typename T>
   string NumberToString ( T Number )
@@ -16,14 +18,6 @@ template <typename T>
      ss << Number;
      return ss.str();
   }
-/*
-This is the updated version copy!
-!!!!!!!!!!!!
-!!!!!!!
-!!!
-*/
-
-
 
 bool Consolidator::compareFunction(SNP s1, SNP s2)
 {
@@ -178,6 +172,8 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
                                float hThreshold, bool holdOut,float empirical_threshold, string path, float empirical_pie_threshold)
 {
   int removed1 =0, removed2 = 0, removed3 = 0, removed4 = 0;
+  int not_removed = 0;
+  int total_count = global_initial; //for keeping track of total #SH
   bool wrongOption = false;
   float per_err_threshold1;
   if(empirical_pie_threshold >= 0.0){
@@ -185,6 +181,7 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
   } else {
     per_err_threshold1 = getPctErrThreshold( per_err_threshold );
   }
+
   std::string str = " \n corresponding empirical error threshold for " + NumberToString( per_err_threshold ) + " is: " + NumberToString( per_err_threshold1 )  + " \n";
   float hThreshold1 = 0;
   if( holdOut )
@@ -313,6 +310,45 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
     //in order to update PIE calculation, may have to alter the finalErrors vector before passing it into getThreshold(). But the alteration
     //would need to occur at the start and end of the trimmed SH, not just at the start and end points of the initial SH.
     float per_err = e_obj.getThreshold(finalErrors,del0,del1,ma_snp_ends);
+    //add new weighted option
+    /*
+     For this new option, we only output SH that are not dropped. So, the output is finalOutput + weighted column.
+    */
+    if( (option.compare("weightedOutput") == 0) ){
+      int snp1 = 0, snp2 = 0, hlength = 0;
+      float noOfOppHom = 0;
+      /*if( holdOut )
+      {
+        snp1 = e_obj.getNewSnp( temp1 );
+        snp2 = e_obj.getNewSnp( temp2 );
+        hlength = snp2 - snp1;
+        if( hlength <= 0 )
+        {
+          hlength = 1;
+        }
+        noOfOppHom = e_obj.getOppHomThreshold( pers1, pers2, m_matches[i][j][l].start, m_matches[i][j][l].end );
+      }*/
+      if( ( (beforeTrimEnd - beforeTrimStart) < min_snp) || ( (trimPositions.size() == 3) && (trimPositions[2] == 1) ) ){ 
+        removed4++;
+        continue;
+      }
+      if( (( temp2-temp1 ) < min_snp) || (trimPositions.size() == 3) ){ //removed2 a tpos.size of 3 indicates trimming due ot cM 
+        removed2++;
+        continue;
+      }
+      if( per_err > per_err_threshold){
+        removed1++;
+        continue;
+      }
+      if( holdOut && hThreshold < ( noOfOppHom ) / hlength ){
+        removed3++;
+        continue; 
+      } //removed3
+
+      not_removed++;
+      m_weighted_sh.push_back(Weighted_SH(temp1,temp2,i,j)); //build the vector of SH that passed
+      continue;
+    }//end weghtedOutput
     if( (option.compare("FullPlusDropped") == 0) ){
       int snp1 = 0, snp2 = 0, hlength = 0;
       float noOfOppHom = 0;                
@@ -498,6 +534,26 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
     }
 
   }//end while(!eof)
+  /*Now, let's handle weighted output if need be*/
+  if( option.compare("weightedOutput") == 0 ){
+    float snp_average_count = 0.0;
+    int start_position = find_genome_min();
+    int end_position = find_genome_max();
+    int genome_length = (end_position - start_position);
+    genome_vector.resize(genome_length,0);
+    for(int i = 0; i < m_weighted_sh.size(); i++){
+      update_genome(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2);
+    }
+    snp_average_count = average_snp_count();
+    for(int i = 0; i < m_weighted_sh.size(); i++){
+      m_weighted_sh[i].snp_weight = update_snp_weight(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2);
+    }
+    for(int i = 0; i < m_weighted_sh.size(); i++){
+      m_weighted_sh[i].final_weight = ( snp_average_count / (m_weighted_sh[i].snp_weight));
+      e_obj.weightedOutput(m_weighted_sh[i].per1, m_weighted_sh[i].per2, m_weighted_sh[i].snp1, m_weighted_sh[i].snp2, m_weighted_sh[i].final_weight);
+    }
+  }
+  /*End weighted output*/
   str = " \n No of matches removed due to percentage error: " + NumberToString( removed1 );
   str = str+ " \n No of matches removed due to length of trimming by moving averages: " + NumberToString( removed2 );
   str = str+ " \n No of matches removed due hold out ped file checking: "+ NumberToString( removed3 );
@@ -1122,3 +1178,77 @@ float Consolidator::getPctErrThreshold( float threshold)
  return m_errors[ pos ];
 }
 
+/*Weighted output functions*/
+void Consolidator::update_genome(int snp1,int snp2){
+  int s1,s2;
+  /*if(snp1 != 0){
+    s1 = snp1-1;
+  } else {
+    cerr << "WE HAVE A SNP THAT IS 0!" << endl;
+  }
+  if(snp2 != 0){
+    s2 = snp2-1;
+  } else{
+    cerr <<  "WE HAVE A SNP THAT IS 0" << endl;
+  }*/
+
+  s1 = snp1;
+  s2 = snp2;
+  for(int i = s1; i <= s2; i++){
+    genome_vector[i] += 1;
+  }
+}
+void Consolidator::print_genome(){
+  cout << "Printing Geneome..." << endl;
+  for(int i = 0; i < genome_vector.size(); i++){
+    cout << genome_vector[i] << ", ";
+  }
+}
+float Consolidator::update_snp_weight(int snp1,int snp2){
+/*  if( (snp1 == 0) || (snp2 == 0)){
+    cerr << "WE HAVE A SNP THAT IS 0" << endl;
+  }
+  snp1 = snp1 - 1;
+  snp2 = snp2 - 1;*/
+  int length = ((snp2 - snp1) + 1); //counts are inclusive, so [10,20] has 11 elements, not 10.
+  float sum = 0.0;
+  float weight = 0.0;
+  for(int i = snp1; i <= snp2; i++){
+    sum += genome_vector[i];
+  }
+  weight = sum / length;
+  return weight;
+}
+int Consolidator::find_genome_min(){
+  int min = m_weighted_sh[0].snp1;
+  for(int i = 1; i < m_weighted_sh.size(); i++){
+    if(m_weighted_sh[i].snp1 < min){
+      min = m_weighted_sh[i].snp1;
+    }
+  }
+  return min;
+}
+int Consolidator::find_genome_max(){
+  int max = m_weighted_sh[0].snp2;
+  for(int i = 1; i < m_weighted_sh.size(); i++){
+    if(m_weighted_sh[i].snp2 > max){
+      max = m_weighted_sh[i].snp2;
+    }
+  }
+  return max;
+}
+float Consolidator::average_snp_count(){
+  float sum = 0.0;
+  float avg = 0.0;
+  int zeros = 0;
+  for(int i = 0; i < genome_vector.size(); i++){
+    if(genome_vector[i] == 0){
+      zeros += 1;
+    } else {
+      sum += genome_vector[i];
+    }
+  }
+  avg = sum / ( genome_vector.size() - zeros);
+  return avg;
+}
+/**/
