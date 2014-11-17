@@ -284,38 +284,6 @@ void ErrorCalculator::readHPedFile(string path, string missing)
                  exit( -1 );
          }
 }
-/*
-vector<int> ErrorCalculator::getTrimPositions(std::vector<float>averages,int snp1,int snp2, float threshold,float minLength)
-{
-        vector<int> trimPositions;
-	int length=snp2-snp1;
-        int start=0,end=0;
-        for(int i=0;i<averages.size();++i)
-        {	
-                   if(averages[i]>threshold)   //start going through every recorded average, and look to see if it is greater than the threshold, indicating either a start/end position.
-                   {
-
-                        if((marker_id[(snp1+end)].cm_distance-marker_id[(snp1+start)].cm_distance)>=minLength)
-
-                        {
-                                trimPositions.push_back(start);
-                                trimPositions.push_back(end);
-                        }
-                                start=end=i+1;
-                   }
-                   else 
-                   {
-                       end++;
-
-                   }
-        }
-        if(trimPositions.size()==0&&start==0)
-                {
-                        trimPositions.push_back(0);
-                        trimPositions.push_back(length);
-                }
-          return trimPositions;
-}*/
 //New function for signaling whether or not an SH is an initial drop
 bool ErrorCalculator::isInitialCmDrop(int snp1, int snp2, float minLength){
 	if( ( (marker_id[snp2].cm_distance - marker_id[snp1].cm_distance) < minLength )  ){
@@ -351,21 +319,11 @@ vector<int> ErrorCalculator::getTrimPositions(std::vector<float>averages,int snp
 	}
 	if(length <= 61) {
 	//In this case, we can't move +- 30 on either side, so we need to determine this size dynamically, based on the length of the SH.		
-		//For now, move out 20% on either side...this should probably be standardized at some point.
 		distance_from_midpoint = (int)( (0.28 * length) + 0.5 );		
-	//	start = midpoint - distance_from_midpoint;
-	//	end = midpoint + distance_from_midpoint;
 		trimPositions.push_back(0);
 		trimPositions.push_back(length-1);
-	//	trimPositions.push_back(start);
-	//	trimPositions.push_back(end);
 		return trimPositions;
-		/* Commenting this out for now - this may cause trouble. 5/15/14
-		trimPositions.push_back(midpoint);
-		trimPositions.push_back(midpoint+1); //error case. This SH will be dropped due to min lenght later
-		return trimPositions;*/
 	}
-	//neither of the above two conditions ever seem to be true - nate 3/2/2014
 	for(int i = (midpoint-distance_from_midpoint); i >= 0; i--){ //find the start of the SH. Originally had a value of 30 hardcoded.
 		if(averages[i]>threshold){
 			start = i+1;
@@ -393,7 +351,6 @@ vector<int> ErrorCalculator::getTrimPositions(std::vector<float>averages,int snp
         	trimPositions.push_back(start);
 		trimPositions.push_back(end);
 	}else{ //in this case, we have failed the cM length constraint, so drop it
-		//just trying this out as a theory for now. Will need a better solution in the future, even if this idea does work.
 		trimPositions.push_back(start);
 		trimPositions.push_back(end);
 		trimPositions.push_back(2);//eo output code
@@ -445,13 +402,6 @@ vector<float>  ErrorCalculator::getTrueMovingAverages(vector<int> errors,int snp
 		e_Places[errors[i]] = 1;
 	}
 	
-/*	cerr << "av and e_P and l: " << averages.size() << " " << e_Places.size() << " " << length << endl;
-        for(int i = 0; i < e_Places.size(); i++){
-                cerr << "i: " << i << " : " << e_Places[i] << endl;
-        }*/
-
-
-
 	for(int i = 0; i<(width); i++){
 		averages[0] += e_Places[i];
 	}
@@ -478,7 +428,7 @@ vector<float> ErrorCalculator::getTrueMovingAverages2(vector<int> errors,int snp
 	int previous = 0;
 	int present;
 	averages.resize((length-width));
-	e_Places.resize(length+(width/2));//not sure on this one
+	e_Places.resize(length+(width/2));
 	for(int i = 0; i < errors.size(); i++){
                 e_Places[errors[i]] = 1;
         }
@@ -502,15 +452,9 @@ vector<float> ErrorCalculator::getTrueMovingAverages2(vector<int> errors,int snp
 vector<float>  ErrorCalculator::getMovingAverages(vector<int> errors,int snp1,int snp2,int width)
 {
         vector<float> averages;
-	int length= snp2-snp1;
+	      int length= snp2-snp1;
         vector<int> e_Places;
         averages.resize(length);
-
-	//Testing dynamic window size
-/*	if(length < 2*width){
-		cerr << "Interesting case at: " << snp1 << ", " << snp2 << endl;
-		width = 0.5 * length;
-	}*/
         e_Places.resize(length+(width/2));
 	      e_Places[(e_Places.size()-1)]=1;//this is injecting an error at the last possible position. We may ignore this from now on.
 	
@@ -540,31 +484,6 @@ vector<float>  ErrorCalculator::getMovingAverages(vector<int> errors,int snp1,in
 	}
 	present -= 1;
 	int midpoint = (int)((length/2.0)+0.5);
-
-	/*original, working version
-        for(int i=1;i<length;i++)
-        {
-                if(present<width)
-                {
-                        averages[i]=averages[i-1]+e_Places[++present];
-
-                }
-                else
-                {
-                        averages[i]=averages[i-1]+(e_Places[present]-e_Places[previous]);
-                        previous++;
-                        present++;
-                }
-
-        }
-	*/
-	//debug
-/*	cerr << e_Places[lastPos] << endl;
-	cerr << "[";
-	for(int i  = 0; i < e_Places.size(); i++){
-		cerr << e_Places[i] << " " ;
-	}
-	cerr << "]" << endl;*/
 	//forwards
 	for(int i = 1; i < midpoint; i++){
 		if(present<width){
@@ -824,19 +743,21 @@ void ErrorCalculator::finalOutPut(int pers1,int pers2,int snp1,int snp2, float m
  
         if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2) 
         {
-               cerr<<"some thing went wrong with bsid file while outputing"<<endl;
+               cerr<<"There is an error with the ped and bsid files, please check that they are correct."<<endl;
                return;
 
         }
 	
              if(snp1>=marker_id.size()||snp2>=marker_id.size())
              {
-                     cerr<<"some thing went wrong with bmid file while outputing. The snp1 is: "<<snp1<<" snp2 is "<<snp2<<" marker id size is "<<marker_id.size()<<endl;
+                     cerr<<"something went wrong with the bmid file while outputing. The snp1 is: "<<snp1<<" snp2 is "<<snp2<<" marker id size is "<<marker_id.size()<<endl;
                      return;
 
              }
-                cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+             //Addressing the use of IID instead of FID by stepping up one index in the master sample_id vector. This has been tested, and will be
+             //applied to all outputs. It goes from sample_id[pers1*2] --> sample_id[(pers1*2)+1]
+                cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
              <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -846,10 +767,6 @@ void ErrorCalculator::finalOutPut(int pers1,int pers2,int snp1,int snp2, float m
 }
 
 void ErrorCalculator::finalErrorsOutput(int pers1, int pers2, int snp1, int snp2, float min_cm, float per_err){
- // if((marker_id[snp2].cm_distance-marker_id[snp1].cm_distance)<min_cm)
-  //{
-   // return; 
- // }
   if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2) 
   {
     cerr<<"some thing went wrong with bsid file while outputing"<<endl;
@@ -861,8 +778,8 @@ void ErrorCalculator::finalErrorsOutput(int pers1, int pers2, int snp1, int snp2
     cerr<<"some thing went wrong with bmid file while outputing. The snp1 is: "<<snp1<<" snp2 is "<<snp2<<" marker id size is "<<marker_id.size()<<endl;
     return;
   }
-  cout<<sample_id[pers1*2]<<"\t"
-  <<sample_id[pers2*2]<<"\t"
+  cout<<sample_id[(pers1*2)+1]<<"\t"
+  <<sample_id[(pers2*2)+1]<<"\t"
   <<marker_id[snp1].bp_distance<<"\t"
   <<marker_id[snp2].bp_distance<<"\t"
   <<(snp2-snp1)<<"\t"
@@ -871,8 +788,8 @@ void ErrorCalculator::finalErrorsOutput(int pers1, int pers2, int snp1, int snp2
 }
 
 void ErrorCalculator::weightedOutput(int pers1, int pers2, int snp1, int snp2, float weight){
-  cout<<sample_id[pers1*2]<<"\t"
-  <<sample_id[pers2*2]<<"\t"
+  cout<<sample_id[(pers1*2)+1]<<"\t"
+  <<sample_id[(pers2*2)+1]<<"\t"
   <<marker_id[snp1].bp_distance<<"\t"
   <<marker_id[snp2].bp_distance<<"\t"
   <<(snp2-snp1)<<"\t"
@@ -888,8 +805,8 @@ void ErrorCalculator::fullPlusDroppedOutput( int pers1,int pers2,int snp1,int sn
                return;
         }
 
-   cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+   cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
     <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -909,7 +826,7 @@ void ErrorCalculator::middleOutPut(int pers1, int pers2, int snp1, int snp2, int
 		cerr << "Something went wrong with the bsid file while outputting data." << endl;
 		return;
 	}
-	cout << sample_id[pers1*2] << "\t" << sample_id[pers2*2] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
+	cout << sample_id[(pers1*2)+1] << "\t" << sample_id[(pers2*2)+1] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
 	     << start << "/" << end << "\t" << (snp2-snp1) << "\t" << (marker_id[snp2].cm_distance - marker_id[snp1].cm_distance) << "\t" << "/";
 	for(int i = 0; i < positions.size(); i++){
 		cout << positions[i] << "/";
@@ -925,13 +842,6 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,int snp1,int snp2, int m
         {
            return;
         }
-	//in theory, changing this to output trim-dropped data shouldn't affect anything. But if it does, looks here first,
-	//and consider overloading this function(yet again).
-        /*if((marker_id[snp2].cm_distance - marker_id[snp1].cm_distance)<min_cm || (snp2-snp1) < min_snp )
-        {
-	     
-             return;
-        }*/
    
         if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2)
         {
@@ -939,8 +849,8 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,int snp1,int snp2, int m
                return;
         }
 
-	 cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+	 cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
 		<<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -970,8 +880,8 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,int snp1,int snp2,int mi
                return;
         }
 
-   cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+   cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
     <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -1008,8 +918,8 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -1038,20 +948,14 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
         {
            return;
         }
-/*        if((marker_id[snp2].cm_distance - marker_id[snp1].cm_distance)<min_cm || (snp2-snp1) < min_snp )
-        {
-             cout << "Testing a theory. " << endl;
-             return;
-        }
-*/
         if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2)
         {
                cerr<<"some thing went wrong with bsid file while outputing"<<endl;
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -1066,7 +970,6 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
         {
                 cout<<positions[i]<<"/";
         }
-//        cout<<"\t"<< pct_err <<endl;
 
 }
 //==================================================
@@ -1095,12 +998,7 @@ template < class T > void ErrorCalculator::errorOutput(int pers1, int pers2, int
                cerr<<"something went wrong with bsid file while outputing"<<endl;
                return;
         }
-/*	cerr << "ABOUT TO COUT" << endl;//debug
-	cerr << "Pers1 is: " << sample_id[pers1] << endl;
-	cerr << "But the snps are: " << snp1 << ", " << snp2 << endl;
-	cerr << "Therefore for snp1: " << marker_id[snp1].bp_distance << endl;
-	cerr << "And snp2: " << marker_id[snp2].bp_distance << endl;*/
-	cout << sample_id[pers1*2] << "\t" << sample_id[pers2*2] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
+	cout << sample_id[(pers1*2)+1] << "\t" << sample_id[(pers2*2)+1] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
              << (snp2-snp1) << "\t" << (marker_id[snp2].cm_distance-marker_id[snp1].cm_distance) << "\t" << pct_err << "\t" << start << "/" << end << "\t" << startTrim <<"/" << endTrim << "\t" << reason 
 	     << "\t" << "/";
 	for(int i=0;i<errors.size();++i)
@@ -1140,8 +1038,8 @@ void ErrorCalculator::middleHoldOutPut( int pers1,
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
