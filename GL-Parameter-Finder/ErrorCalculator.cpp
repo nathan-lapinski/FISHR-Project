@@ -809,8 +809,8 @@ void ErrorCalculator::finalOutPut(int pers1,int pers2,int snp1,int snp2, float m
                      return;
 
              }
-                cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+                cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
              <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -826,8 +826,8 @@ void ErrorCalculator::fullPlusDroppedOutput( int pers1,int pers2,int snp1,int sn
                return;
         }
 
-   cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+   cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
     <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -847,7 +847,7 @@ void ErrorCalculator::middleOutPut(int pers1, int pers2, int snp1, int snp2, int
 		cerr << "Something went wrong with the bsid file while outputting data." << endl;
 		return;
 	}
-	cout << sample_id[pers1*2] << "\t" << sample_id[pers2*2] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
+	cout << sample_id[(pers1*2)+1] << "\t" << sample_id[(pers2*2)+1] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
 	     << start << "/" << end << "\t" << (snp2-snp1) << "\t" << (marker_id[snp2].cm_distance - marker_id[snp1].cm_distance) << "\t" << "/";
 	for(int i = 0; i < positions.size(); i++){
 		cout << positions[i] << "/";
@@ -863,22 +863,15 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,int snp1,int snp2, int m
         {
            return;
         }
-	//in theory, changing this to output trim-dropped data shouldn't affect anything. But if it does, looks here first,
-	//and consider overloading this function(yet again).
-        /*if((marker_id[snp2].cm_distance - marker_id[snp1].cm_distance)<min_cm || (snp2-snp1) < min_snp )
-        {
-	     
-             return;
-        }*/
-   
+
         if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2)
         {
                cerr<<"some thing went wrong with bsid file while outputing"<<endl;
                return;
         }
 
-	 cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+	 cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
 		<<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -908,8 +901,8 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,int snp1,int snp2,int mi
                return;
         }
 
-   cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+   cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
     <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -946,8 +939,8 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -976,20 +969,15 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
         {
            return;
         }
-/*        if((marker_id[snp2].cm_distance - marker_id[snp1].cm_distance)<min_cm || (snp2-snp1) < min_snp )
-        {
-             cout << "Testing a theory. " << endl;
-             return;
-        }
-*/
+
         if(sample_id.size()<=pers1*2||sample_id.size()<=pers2*2)
         {
                cerr<<"some thing went wrong with bsid file while outputing"<<endl;
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
@@ -1004,7 +992,6 @@ void ErrorCalculator::middleOutPut( int pers1,int pers2,
         {
                 cout<<positions[i]<<"/";
         }
-//        cout<<"\t"<< pct_err <<endl;
 
 }
 //==================================================
@@ -1033,7 +1020,7 @@ template < class T > void ErrorCalculator::errorOutput(int pers1, int pers2, int
                cerr<<"something went wrong with bsid file while outputing"<<endl;
                return;
         }
-	cout << sample_id[pers1*2] << "\t" << sample_id[pers2*2] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
+	cout << sample_id[(pers1*2)+1] << "\t" << sample_id[(pers2*2)+1] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
              << (snp2-snp1) << "\t" << (marker_id[snp2].cm_distance-marker_id[snp1].cm_distance) << "\t" << pct_err << "\t" << start << "/" << end << "\t" << startTrim <<"/" << endTrim << "\t" << reason 
 	     << "\t" << "/";
 	for(int i=0;i<errors.size();++i)
@@ -1058,7 +1045,7 @@ template < class T > void ErrorCalculator::errorOutput(int pers1, int pers2, int
                cerr<<"something went wrong with bsid file while outputing"<<endl;
                return;
         }
-  cout << sample_id[pers1*2] << "\t" << sample_id[pers2*2] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
+  cout << sample_id[(pers1*2)+1] << "\t" << sample_id[(pers2*2)+1] << "\t" << marker_id[snp1].bp_distance << "\t" << marker_id[snp2].bp_distance << "\t"
              << (snp2-snp1) << "\t" << (marker_id[snp2].cm_distance-marker_id[snp1].cm_distance) << "\t" << start << "/" << end << "\t" << PIE << "\t" << MAMAX << "\t" << randomPIE << "\t" << RANDOMmaMAX 
        << "\t" << "/";
 	
@@ -1101,8 +1088,8 @@ void ErrorCalculator::middleHoldOutPut( int pers1,
                return;
         }
 
-         cout<<sample_id[pers1*2]<<"\t"
-             <<sample_id[pers2*2]<<"\t"
+         cout<<sample_id[(pers1*2)+1]<<"\t"
+             <<sample_id[(pers2*2)+1]<<"\t"
                 <<marker_id[snp1].bp_distance<<"\t"
              <<marker_id[snp2].bp_distance<<"\t"
                <<(snp2-snp1)<<"\t"
