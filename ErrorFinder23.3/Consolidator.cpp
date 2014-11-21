@@ -116,6 +116,35 @@ pid[0] = -1;
     }
         
 }
+//for reading in a file of user supplied snp weights
+void Consolidator::readUserSuppliedSnpWeights( std::string path ){
+  float temp;
+  stringstream ss;
+  string item,line;
+  try
+  {
+    ifstream file_weights(path.c_str());
+    if( !file_weights )
+    {
+      cerr<< "Weight file cannot be opened, check the path or the file type. Exiting program." <<endl; 
+      exit( -1 );
+    }
+    while ( getline(file_weights , line) )
+    {
+      ss.clear(); 
+      ss.str( line );
+      ss >> temp;
+      user_supplied_snp_weights.push_back( temp );
+    }
+    file_weights.close();
+  }
+  catch(exception &e)
+  {
+    cerr<<e.what()<<endl;
+    exit( -1 );
+  }
+}
+
 void Consolidator::performConsolidation(ErrorCalculator& eCalculator, int gap,int min_snp,float min_cm)
 {
          int consolidations = 0, removed = 0;
@@ -507,13 +536,31 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
   /*Now, let's handle weighted output if need be*/
   if( option.compare("weightedOutput") == 0 ){
     float snp_average_count = 0.0;
-    int start_position = find_genome_min();
-    int end_position = find_genome_max();
-    int genome_length = (end_position - start_position);
+    int start_position;
+    int end_position;
+    int genome_length;
+    if(isUserSuppliedWeights()){ //the user has supplied their own weights.
+      //in this case, the min and max values correspond to the number of lines in the input file,
+      //since each line represents a snp. So the min is always 0, and the max is always the number of lines-1.
+      start_position = 0;
+      end_position = user_supplied_snp_weights.size() - 1;
+    }else {
+      start_position = find_genome_min();
+      end_position = find_genome_max();
+    }//end else
+    genome_length = (end_position - start_position);
     genome_vector.resize(genome_length,0);
-    for(int i = 0; i < m_weighted_sh.size(); i++){
-      update_genome(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2);
+    if(isUserSuppliedWeights()){
+      for(int i = 0; i < user_supplied_snp_weights.size(); i++){
+        update_genome(i,user_supplied_snp_weights[i]);
+      }
+    }else{
+      /*This next for loop adds one to each snp in a SH. Bypass it if the user gives a files of weights*/
+      for(int i = 0; i < m_weighted_sh.size(); i++){
+        update_genome(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2);
+      }
     }
+    //this part is next...will probably need to add stuff to that weighted object...
     snp_average_count = average_snp_count();
     for(int i = 0; i < m_weighted_sh.size(); i++){
       m_weighted_sh[i].snp_weight = update_snp_weight(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2);
@@ -849,23 +896,21 @@ float Consolidator::getPctErrThreshold( float threshold)
 /*Weighted output functions*/
 void Consolidator::update_genome(int snp1,int snp2){
   int s1,s2;
-  /*if(snp1 != 0){
-    s1 = snp1-1;
-  } else {
-    cerr << "WE HAVE A SNP THAT IS 0!" << endl;
-  }
-  if(snp2 != 0){
-    s2 = snp2-1;
-  } else{
-    cerr <<  "WE HAVE A SNP THAT IS 0" << endl;
-  }*/
-
   s1 = snp1;
   s2 = snp2;
   for(int i = s1; i <= s2; i++){
     genome_vector[i] += 1;
   }
 }
+
+void Consolidator::update_genome(int snp, float weight){
+  if( (snp < 0) || (snp > genome_vector.size()) ){
+    cerr << "Error in updating genome. SNP: " << snp << " is outside of genome length." << endl;
+    exit(-1);
+  }
+  genome_vector[snp] = weight;
+}
+
 void Consolidator::print_genome(){
   cout << "Printing Geneome..." << endl;
   for(int i = 0; i < genome_vector.size(); i++){
@@ -873,11 +918,6 @@ void Consolidator::print_genome(){
   }
 }
 float Consolidator::update_snp_weight(int snp1,int snp2){
-/*  if( (snp1 == 0) || (snp2 == 0)){
-    cerr << "WE HAVE A SNP THAT IS 0" << endl;
-  }
-  snp1 = snp1 - 1;
-  snp2 = snp2 - 1;*/
   int length = ((snp2 - snp1) + 1); //counts are inclusive, so [10,20] has 11 elements, not 10.
   float sum = 0.0;
   float weight = 0.0;
@@ -918,5 +958,9 @@ float Consolidator::average_snp_count(){
   }
   avg = sum / ( genome_vector.size() - zeros);
   return avg;
+}
+
+bool Consolidator::isUserSuppliedWeights(){
+  return user_supplied_snp_weights.size();
 }
 /**/

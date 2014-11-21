@@ -35,6 +35,7 @@ class Consolidator
  
         void readMatches( std::string path, int pers_count, 
                      ErrorCalculator& eCalculator, int trueSNP, float trueCM );
+        void readUserSuppliedSnpWeights( std::string path );
 
         void finalOutPut(ErrorCalculator &e,float min_cm, int min_snp )const;
         void findTruePctErrors( ErrorCalculator &e,
@@ -45,7 +46,9 @@ class Consolidator
         float getHoldOutThreshold( float threshold );
         /*Weighted output functions*/
         void update_genome(int snp1,int snp2);
+        void update_genome(int snp, float weight);
         void print_genome();
+        bool isUserSuppliedWeights();
         float update_snp_weight(int snp1,int snp2);
         int find_genome_min();
         int find_genome_max();
@@ -71,6 +74,8 @@ class Consolidator
         std::vector < Weighted_SH > m_weighted_sh;
         //this should actually hold the ints for the genome array in the weighted algorithm
         std::vector <int> genome_vector;
+        //this vector is if a user supplies a file of snp weights
+        std::vector<float> user_supplied_snp_weights;
         void sortMatches();
 
         static bool compareFunction(SNP s1, SNP s2);   
