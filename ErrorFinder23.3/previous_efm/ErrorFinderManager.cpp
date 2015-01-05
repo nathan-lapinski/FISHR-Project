@@ -109,9 +109,6 @@ void ErrorFinderManager::performConsolidation(int argc,char *argv[])
                 else if(strcmp(argv[i], "-snpfile") ==0&&i<argc-1){
                      SNPWEIGHTFILE = string(argv[++i]);
                 }
-                else if(strcmp(argv[i], "-cminputfile") ==0&&i<argc-1){
-                     CMINPUTFILE = string(argv[++i]);
-                }
                 else  if(strcmp(argv[i],"-log.file")==0&&i<argc-1)
                 {
                      LOGFILE=string(argv[++i]);
@@ -321,9 +318,6 @@ void ErrorFinderManager::initiateErrorFinder()
         cerr<<"Reading bmatch file completed"<<endl;
         if( !(SNPWEIGHTFILE.empty())){ //verify that this check actually works
           consolidator.readUserSuppliedSnpWeights(SNPWEIGHTFILE);
-        }
-        if(!(CMINPUTFILE.empty())){
-          consolidator.readUserSuppliedCmWeights(CMINPUTFILE);
         }
 //testing to see what happens when consolidation is removed
         consolidator.performConsolidation(eCalculator,GAP,MIN_SNP,MIN_CM);

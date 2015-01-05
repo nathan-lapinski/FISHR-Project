@@ -12,9 +12,6 @@ public:
     int per1,per2;
     float final_weight;
     float snp_weight;
-    float mbp_length;
-    float wprime;
-    float w2prime;
     Weighted_SH(int s1,int s2,int p1,int p2){
         snp1 = s1;
         snp2 = s2;
@@ -39,7 +36,6 @@ class Consolidator
         void readMatches( std::string path, int pers_count, 
                      ErrorCalculator& eCalculator, int trueSNP, float trueCM );
         void readUserSuppliedSnpWeights( std::string path );
-        void readUserSuppliedCmWeights(std::string path);
 
         void finalOutPut(ErrorCalculator &e,float min_cm, int min_snp )const;
         void findTruePctErrors( ErrorCalculator &e,
@@ -58,8 +54,6 @@ class Consolidator
         int find_genome_max();
         float average_snp_count();
         /**/
-        float get_snps_over_range(int snp1, int snp2, float weight);
-        float get_weight_cm_output(std::map <float,float>, float length);
 
 	//new methods to handle calculations of moving averages -nate 2/11/2014
 	std::vector < std::vector < std::vector < SNP > > > getTrueMatches(){
@@ -82,7 +76,6 @@ class Consolidator
         std::vector <int> genome_vector;
         //this vector is if a user supplies a file of snp weights
         std::vector<float> user_supplied_snp_weights;
-        std::map<float,float> user_supplied_cm_weights;
         void sortMatches();
 
         static bool compareFunction(SNP s1, SNP s2);   

@@ -4,14 +4,6 @@
 #include<vector>
 class SNPs;
 class Marker;
-class Marker
-{
-    public:
-        short   chr;
-        std::string  rsid;
-        float   cm_distance;
-        long    bp_distance;
-};
 class ErrorCalculator
 {
          public:
@@ -133,11 +125,6 @@ class ErrorCalculator
          void setCutoff(float c){cutoff = c;}
 	 float getCutoff(){return cutoff;}
 	 bool isInitialCmDrop(int snp1, int snp2, float minLength);
-     //functions for new weighting algorithm that uses bp_distance 12/4/2014
-     int getMinimumBP(){return marker_id[0].bp_distance;} //should be zero I think
-     int getMaximumBP(){return marker_id[marker_id.size()-1].bp_distance;}
-     int getSHBPLength(int snp1, int snp2){return (marker_id[snp2].bp_distance - marker_id[snp1].bp_distance);}
-     int getGenomeBPLength(){return (marker_id[marker_id.size()-1].bp_distance - marker_id[0].bp_distance);}
          private:
          int pers_count;
          std::vector<std::vector<SNPs > >ped_file;
@@ -157,4 +144,12 @@ class SNPs
        public:
        bool SNP1,SNP2;
 
+};
+class Marker
+{
+	public:
+        short   chr;
+        std::string  rsid;
+        float   cm_distance;
+        long    bp_distance;
 };

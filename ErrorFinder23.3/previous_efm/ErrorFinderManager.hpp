@@ -16,7 +16,7 @@ class ErrorFinderManager
              PCT_ERR_THRESHOLD,HO_THRESHOLD, TRUECM, PIELENGTH, MA_THRESHOLD,EMPIRICAL_MA_RESULT, EMPIRICAL_PIE_RESULT;
        bool ISMOL, COUNTGAPERR;
        std::string BMIDFILE,BMATCHFILE,BSIDFILE,PEDFILE,
-                     HPEDFILE,HMAPFILE,OPTION, HO_MISSING, LOGFILE, SNPWEIGHTFILE, CMINPUTFILE;
+                     HPEDFILE,HMAPFILE,OPTION, HO_MISSING, LOGFILE, SNPWEIGHTFILE;
        ErrorCalculator eCalculator;
        Consolidator consolidator;
        std::string wrongParam;

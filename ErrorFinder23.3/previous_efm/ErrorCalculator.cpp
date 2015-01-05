@@ -8,7 +8,6 @@
 #include <fstream>
 #include <time.h>
 #include <assert.h>
-#include <map>
 using namespace std;
 void ErrorCalculator::createLogFile( std::string path )
 {

@@ -10,8 +10,6 @@
 #include <assert.h>
 #include <sstream>
 #include <iomanip>
-#include <cfloat>
-#include <map>
 using namespace std;
 
 template <typename T>
@@ -137,39 +135,6 @@ void Consolidator::readUserSuppliedSnpWeights( std::string path ){
       ss.str( line );
       ss >> temp;
       user_supplied_snp_weights.push_back( temp );
-    }
-    file_weights.close();
-  }
-  catch(exception &e)
-  {
-    cerr<<e.what()<<endl;
-    exit( -1 );
-  }
-}
-
-
-
-//for reading in a file of user supplied snp weights
-void Consolidator::readUserSuppliedCmWeights( std::string path ){
-  float cm;
-  float weight;
-  stringstream ss;
-  string item,line;
-  try
-  {
-    ifstream file_weights(path.c_str());
-    if( !file_weights )
-    {
-      cerr<< "Weight file cannot be opened, check the path or the file type. Exiting program." <<endl; 
-      exit( -1 );
-    }
-    while ( getline(file_weights , line) )
-    {
-      ss.clear(); 
-      ss.str( line );
-      ss >> cm;
-      ss >> weight;
-      user_supplied_cm_weights[cm] = weight;
     }
     file_weights.close();
   }
@@ -331,7 +296,7 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
         /*
          For this new option, we only output SH that are not dropped. So, the output is finalOutput + weighted column.
         */
-        if( (option.compare("weightedOutput") == 0) || (option.compare("weightedOutputBP") == 0) || (option.compare("weightedOutputCM") == 0)){
+        if( (option.compare("weightedOutput") == 0) ){
           int snp1 = 0, snp2 = 0, hlength = 0;
           float noOfOppHom = 0;
           if( holdOut )
@@ -568,13 +533,6 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
       }//l
     }//j
   }//i
-
-
-  /*ENTERING TESTING AREA DEC 4th 2014*/
-  /*****************************
-  ******************************/
-
-
   /*Now, let's handle weighted output if need be*/
   if( option.compare("weightedOutput") == 0 ){
     float snp_average_count = 0.0;
@@ -590,7 +548,7 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
       start_position = find_genome_min();
       end_position = find_genome_max();
     }//end else
-    genome_length = (end_position - start_position)+1;
+    genome_length = (end_position - start_position);
     genome_vector.resize(genome_length,0);
     if(isUserSuppliedWeights()){
       for(int i = 0; i < user_supplied_snp_weights.size(); i++){
@@ -612,84 +570,7 @@ void Consolidator::performTrim(ErrorCalculator& e_obj,int window,
       e_obj.weightedOutput(m_weighted_sh[i].per1, m_weighted_sh[i].per2, m_weighted_sh[i].snp1, m_weighted_sh[i].snp2, m_weighted_sh[i].final_weight);
     }
   }
-
-  if (option.compare("weightedOutputBP") == 0){
-
-  //begin new test code section here: Dec 4th 2014
-  int genome_length = e_obj.getGenomeBPLength();    
-  float adjusted_genome_length = genome_length / 1000.0; //L using kbp for now
-  int genome_min = e_obj.getMinimumBP();
-  int genome_max = e_obj.getMaximumBP();
-  int genome_size_snps = (find_genome_max() - find_genome_min())+1; //used for genome_vector
-  float wprime_numerator = 0.0;  //This is Ci / L
-  float total_sh_length_sum = 0.0;
-  float w2prime_denominator = 0.0;
-
-  genome_vector.resize(genome_size_snps,0); //resize and zero out the genome. shit that needs to be snps.
-
-  //update all of the snp counts in the genome. This looks fine.
-  for(int i = 0; i < m_weighted_sh.size(); i++){
-    update_genome(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2); 
-  }
-
-  //calculate the w' numerator by summing up all of the snp counts and dividing by the genome length.
-  //WARNING: This can cause wprime_numerator to overflow. Currently using kbp units to avoid this, but
-  //this needs to be addressed.
-  for(int i = 0; i < genome_vector.size(); i++){
-    wprime_numerator += genome_vector[i] / adjusted_genome_length;
-  }
-  
-  //Calculate w' for each SH.
-  for(int i = 0; i < m_weighted_sh.size(); i++){
-    float wprime_denominator = 0.0;
-    m_weighted_sh[i].mbp_length = (e_obj.getSHBPLength(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2)/1000.0);
-    wprime_denominator = get_snps_over_range(m_weighted_sh[i].snp1, m_weighted_sh[i].snp2, m_weighted_sh[i].mbp_length);
-    m_weighted_sh[i].wprime = wprime_numerator / wprime_denominator;
-  }
-
-  //This is the total length of all SH. This can probably overflow as well...ugh.
-  for(int i = 0; i < m_weighted_sh.size(); i++){
-    total_sh_length_sum += m_weighted_sh[i].mbp_length;
-  }
-  
-  //Calculate the w2prime denominator - this value is a constant
-  for(int i = 0; i < m_weighted_sh.size(); i++){
-    float temp = m_weighted_sh[i].mbp_length * m_weighted_sh[i].wprime;
-    w2prime_denominator += temp / total_sh_length_sum;
-  }
-
-  //Calculate and output w2' for each SH
-  for(int i = 0; i < m_weighted_sh.size(); i++){
-    m_weighted_sh[i].w2prime = (m_weighted_sh[i].wprime) / w2prime_denominator;
-    e_obj.weightedOutput(m_weighted_sh[i].per1, m_weighted_sh[i].per2, m_weighted_sh[i].snp1, m_weighted_sh[i].snp2, m_weighted_sh[i].w2prime);
-  }
-}
-
-  if(option.compare("weightedOutputCM") == 0){
-    if(user_supplied_cm_weights.size() == 0){
-      cerr << "Error, did you forget to supply the input file of weights?" << endl;
-      exit(-1);
-    }
-    float cm1 = 0.0;
-    float cm2 = 0.0;
-    float cm_length = 0.0;
-    float weight = 0.0;
-    for(int i = 0; i < m_weighted_sh.size(); i++){
-      cm1 = e_obj.getCMDistance(m_weighted_sh[i].snp1);
-      cm2 = e_obj.getCMDistance(m_weighted_sh[i].snp2);
-      cm_length = cm2 - cm1;
-      weight = get_weight_cm_output( user_supplied_cm_weights, cm_length);
-      e_obj.weightedOutput(m_weighted_sh[i].per1, m_weighted_sh[i].per2, m_weighted_sh[i].snp1, m_weighted_sh[i].snp2, weight);
-    }
-  }
-
   /*End weighted output*/
-
-
-
-  /*END TESTING AREA DEC 4th 2014*/
-  /*****************************
-  ******************************/
   ma_drop_str = "No of matches removed due to length of trimming by moving averages: " + NumberToString( removed2 );
   pie_drop_str = "No of matches removed due to percentage error: " + NumberToString( removed1 );
   if(holdOut){
@@ -1083,32 +964,3 @@ bool Consolidator::isUserSuppliedWeights(){
   return user_supplied_snp_weights.size();
 }
 /**/
-float Consolidator::get_snps_over_range(int snp1, int snp2, float weight){
-  int length = ((snp2 - snp1) + 1); //counts are inclusive, so [10,20] has 11 elements, not 10.
-  float sum = 0.0;
-  for(int i = snp1; i <= snp2; i++){
-    sum += genome_vector[i] / weight;
-  }
-  return sum;
-}
-float Consolidator::get_weight_cm_output(map <float,float> maps, float length){
-  map <float, float>::iterator it;
-  it=maps.begin();
-  float previous = it->first;
-  float prevweight = it->second;
-  if(length < previous){
-    cerr << "Error, cM length: " << length << " is less than the minimum weight length, which is: " << previous << endl;
-    exit(-1);
-  }
-  for(++it; it != maps.end(); ++it){
-    if(length >= previous && length < it->first){
-      return prevweight;
-    } else {
-      previous = it->first;
-      prevweight = it->second;
-    }
-  }
-  //cerr << "Error, cM length: " << length << " is greater than the maximum weight length, which is: " << previous << endl;
-  //exit(-1);
-  return prevweight;
-}
